@@ -1,0 +1,219 @@
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.Collections;
+
+public class Main {
+    
+    static class RegistroDatos {
+        int valor;
+        String fecha;
+        String categoria;
+        
+        public RegistroDatos(int valor, String fecha, String categoria) {
+            this.valor = valor;
+            this.fecha = fecha;
+            this.categoria = categoria;
+        }
+    }
+
+    static class NodoDatos {
+        RegistroDatos dato;
+        NodoDatos izquierdo;
+        NodoDatos derecho;
+        
+        public NodoDatos(RegistroDatos dato) {
+            this.dato = dato;
+            this.izquierdo = null;
+            this.derecho = null;
+        }
+    }
+
+    static class AnalizadorDatos {
+        private NodoDatos raiz;
+        private Scanner scanner = new Scanner(System.in);
+        private ArrayList<Integer> todosValores = new ArrayList<>();
+        
+        public void insertarDato(RegistroDatos dato) {
+            raiz = insertarRecursivo(raiz, dato);
+            todosValores.add(dato.valor);
+        }
+        
+        private NodoDatos insertarRecursivo(NodoDatos nodo, RegistroDatos dato) {
+            if (nodo == null) {
+                return new NodoDatos(dato);
+            }
+            
+            if (dato.valor < nodo.dato.valor) {
+                nodo.izquierdo = insertarRecursivo(nodo.izquierdo, dato);
+            } else if (dato.valor > nodo.dato.valor) {
+                nodo.derecho = insertarRecursivo(nodo.derecho, dato);
+            } else {
+                // Permitir valores duplicados pero con diferentes fechas/categorías
+                nodo.derecho = insertarRecursivo(nodo.derecho, dato);
+            }
+            return nodo;
+        }
+        
+        public ArrayList<RegistroDatos> buscarPorValor(int valor) {
+            ArrayList<RegistroDatos> resultados = new ArrayList<>();
+            buscarRecursivo(raiz, valor, resultados);
+            return resultados;
+        }
+        
+        private void buscarRecursivo(NodoDatos nodo, int valor, ArrayList<RegistroDatos> resultados) {
+            if (nodo == null) return;
+            
+            if (valor == nodo.dato.valor) {
+                resultados.add(nodo.dato);
+                // Buscar en ambos subárboles para encontrar todos los matches
+                buscarRecursivo(nodo.izquierdo, valor, resultados);
+                buscarRecursivo(nodo.derecho, valor, resultados);
+            } else if (valor < nodo.dato.valor) {
+                buscarRecursivo(nodo.izquierdo, valor, resultados);
+            } else {
+                buscarRecursivo(nodo.derecho, valor, resultados);
+            }
+        }
+        
+        public void mostrarDatosOrdenados() {
+            System.out.println("\nDatos ordenados por valor:");
+            System.out.println("Valor\tFecha\t\tCategoría");
+            inorden(raiz);
+        }
+        
+        private void inorden(NodoDatos nodo) {
+            if (nodo != null) {
+                inorden(nodo.izquierdo);
+                System.out.printf("%d\t%s\t%s%n",
+                    nodo.dato.valor,
+                    nodo.dato.fecha,
+                    nodo.dato.categoria);
+                inorden(nodo.derecho);
+            }
+        }
+        
+        // Funciones estadísticas
+        public double calcularPromedio() {
+            if (todosValores.isEmpty()) return 0;
+            return todosValores.stream().mapToInt(val -> val).average().getAsDouble();
+        }
+        
+        public int calcularMediana() {
+            if (todosValores.isEmpty()) return 0;
+            Collections.sort(todosValores);
+            int middle = todosValores.size()/2;
+            if (todosValores.size() % 2 == 1) {
+                return todosValores.get(middle);
+            } else {
+                return (todosValores.get(middle-1) + todosValores.get(middle)) / 2;
+            }
+        }
+        
+        public int calcularModa() {
+            if (todosValores.isEmpty()) return 0;
+            
+            int moda = todosValores.get(0);
+            int maxCount = 0;
+            
+            for (int i = 0; i < todosValores.size(); i++) {
+                int count = 0;
+                for (int j = 0; j < todosValores.size(); j++) {
+                    if (todosValores.get(j).equals(todosValores.get(i))) {
+                        count++;
+                    }
+                }
+                if (count > maxCount) {
+                    maxCount = count;
+                    moda = todosValores.get(i);
+                }
+            }
+            
+            return moda;
+        }
+        
+        public void mostrarEstadisticas() {
+            System.out.println("\nEstadísticas de los datos:");
+            System.out.println("Total de registros: " + todosValores.size());
+            System.out.println("Valor promedio: " + calcularPromedio());
+            System.out.println("Mediana: " + calcularMediana());
+            System.out.println("Moda: " + calcularModa());
+            System.out.println("Valor mínimo: " + Collections.min(todosValores));
+            System.out.println("Valor máximo: " + Collections.max(todosValores));
+        }
+        
+        public void iniciarMenu() {
+            int opcion;
+            do {
+                System.out.println("\n=== SISTEMA DE ANÁLISIS DE DATOS ===");
+                System.out.println("1. Agregar nuevo registro");
+                System.out.println("2. Buscar registros por valor");
+                System.out.println("3. Mostrar todos los registros ordenados");
+                System.out.println("4. Mostrar estadísticas");
+                System.out.println("5. Salir");
+                System.out.print("Seleccione una opción: ");
+                
+                opcion = scanner.nextInt();
+                scanner.nextLine(); // Limpiar buffer
+                
+                switch(opcion) {
+                    case 1:
+                        System.out.print("Valor numérico: ");
+                        int valor = scanner.nextInt();
+                        scanner.nextLine();
+                        System.out.print("Fecha (dd/mm/aaaa): ");
+                        String fecha = scanner.nextLine();
+                        System.out.print("Categoría: ");
+                        String categoria = scanner.nextLine();
+                        
+                        insertarDato(new RegistroDatos(valor, fecha, categoria));
+                        System.out.println("Registro agregado con éxito!");
+                        break;
+                        
+                    case 2:
+                        System.out.print("Ingrese valor a buscar: ");
+                        int valorBuscar = scanner.nextInt();
+                        ArrayList<RegistroDatos> resultados = buscarPorValor(valorBuscar);
+                        if (resultados.isEmpty()) {
+                            System.out.println("No se encontraron registros con ese valor");
+                        } else {
+                            System.out.println("\nRegistros encontrados:");
+                            for (RegistroDatos dato : resultados) {
+                                System.out.printf("- Valor: %d, Fecha: %s, Categoría: %s%n",
+                                    dato.valor, dato.fecha, dato.categoria);
+                            }
+                        }
+                        break;
+                        
+                    case 3:
+                        mostrarDatosOrdenados();
+                        break;
+                        
+                    case 4:
+                        mostrarEstadisticas();
+                        break;
+                        
+                    case 5:
+                        System.out.println("Saliendo del sistema...");
+                        break;
+                        
+                    default:
+                        System.out.println("Opción no válida");
+                }
+            } while(opcion != 5);
+        }
+    }
+
+    public static void main(String[] args) {
+        AnalizadorDatos analizador = new AnalizadorDatos();
+        
+        // Datos de ejemplo
+        analizador.insertarDato(new RegistroDatos(150, "01/01/2023", "Ventas"));
+        analizador.insertarDato(new RegistroDatos(100, "02/01/2023", "Ventas"));
+        analizador.insertarDato(new RegistroDatos(200, "03/01/2023", "Marketing"));
+        analizador.insertarDato(new RegistroDatos(150, "04/01/2023", "Marketing"));
+        analizador.insertarDato(new RegistroDatos(180, "05/01/2023", "Ventas"));
+        
+        // Iniciar menú interactivo
+        analizador.iniciarMenu();
+    }
+}
