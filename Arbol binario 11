@@ -1,0 +1,149 @@
+class NodoContacto {
+    String nombre;
+    String telefono;
+    NodoContacto izquierdo;
+    NodoContacto derecho;
+
+    public NodoContacto(String nombre, String telefono) {
+        this.nombre = nombre;
+        this.telefono = telefono;
+        this.izquierdo = null;
+        this.derecho = null;
+    }
+}
+
+public class DirectorioTelefonico {
+    private NodoContacto raiz;
+
+    // Insertar contacto
+    public void insertar(String nombre, String telefono) {
+        raiz = insertarRecursivo(raiz, nombre, telefono);
+    }
+
+    private NodoContacto insertarRecursivo(NodoContacto nodo, String nombre, String telefono) {
+        if (nodo == null) {
+            return new NodoContacto(nombre, telefono);
+        }
+
+        int comparacion = nombre.compareTo(nodo.nombre);
+        if (comparacion < 0) {
+            nodo.izquierdo = insertarRecursivo(nodo.izquierdo, nombre, telefono);
+        } else if (comparacion > 0) {
+            nodo.derecho = insertarRecursivo(nodo.derecho, nombre, telefono);
+        } else {
+            nodo.telefono = telefono; // Actualizar si existe
+        }
+        return nodo;
+    }
+
+    // Buscar contacto
+    public String buscar(String nombre) {
+        NodoContacto resultado = buscarRecursivo(raiz, nombre);
+        return resultado != null ? resultado.telefono : "No encontrado";
+    }
+
+    private NodoContacto buscarRecursivo(NodoContacto nodo, String nombre) {
+        if (nodo == null) return null;
+        
+        int comparacion = nombre.compareTo(nodo.nombre);
+        if (comparacion == 0) {
+            return nodo;
+        }
+        return comparacion < 0 
+            ? buscarRecursivo(nodo.izquierdo, nombre)
+            : buscarRecursivo(nodo.derecho, nombre);
+    }
+
+    // Eliminar contacto
+    public void eliminar(String nombre) {
+        raiz = eliminarRecursivo(raiz, nombre);
+    }
+
+    private NodoContacto eliminarRecursivo(NodoContacto nodo, String nombre) {
+        if (nodo == null) return null;
+
+        int comparacion = nombre.compareTo(nodo.nombre);
+        if (comparacion < 0) {
+            nodo.izquierdo = eliminarRecursivo(nodo.izquierdo, nombre);
+        } else if (comparacion > 0) {
+            nodo.derecho = eliminarRecursivo(nodo.derecho, nombre);
+        } else {
+            if (nodo.izquierdo == null) return nodo.derecho;
+            if (nodo.derecho == null) return nodo.izquierdo;
+            
+            NodoContacto minimo = encontrarMinimo(nodo.derecho);
+            nodo.nombre = minimo.nombre;
+            nodo.telefono = minimo.telefono;
+            nodo.derecho = eliminarRecursivo(nodo.derecho, nodo.nombre);
+        }
+        return nodo;
+    }
+
+    private NodoContacto encontrarMinimo(NodoContacto nodo) {
+        return nodo.izquierdo == null ? nodo : encontrarMinimo(nodo.izquierdo);
+    }
+
+    // Mostrar contactos en diferentes órdenes
+    public void mostrarInorden() {
+        System.out.println("Contactos (Inorden - Alfabético):");
+        inorden(raiz);
+    }
+
+    private void inorden(NodoContacto nodo) {
+        if (nodo != null) {
+            inorden(nodo.izquierdo);
+            System.out.println(nodo.nombre + ": " + nodo.telefono);
+            inorden(nodo.derecho);
+        }
+    }
+
+    public void mostrarPreorden() {
+        System.out.println("\nContactos (Preorden):");
+        preorden(raiz);
+    }
+
+    private void preorden(NodoContacto nodo) {
+        if (nodo != null) {
+            System.out.println(nodo.nombre + ": " + nodo.telefono);
+            preorden(nodo.izquierdo);
+            preorden(nodo.derecho);
+        }
+    }
+
+    public void mostrarPostorden() {
+        System.out.println("\nContactos (Postorden):");
+        postorden(raiz);
+    }
+
+    private void postorden(NodoContacto nodo) {
+        if (nodo != null) {
+            postorden(nodo.izquierdo);
+            postorden(nodo.derecho);
+            System.out.println(nodo.nombre + ": " + nodo.telefono);
+        }
+    }
+
+    public static void main(String[] args) {
+        DirectorioTelefonico directorio = new DirectorioTelefonico();
+
+        // Agregar contactos de prueba
+        directorio.insertar("Carlos", "555-1234");
+        directorio.insertar("Ana", "555-5678");
+        directorio.insertar("Maria", "555-9012");
+        directorio.insertar("Pedro", "555-3456");
+
+        // Mostrar todos los contactos en diferentes órdenes
+        directorio.mostrarInorden();
+        directorio.mostrarPreorden();
+        directorio.mostrarPostorden();
+
+        // Demostración de búsqueda
+        System.out.println("\nBuscando a Ana: " + directorio.buscar("Ana"));
+        System.out.println("Buscando a Juan: " + directorio.buscar("Juan"));
+
+        // Demostración de eliminación
+        System.out.println("\nEliminando a Maria...");
+        directorio.eliminar("Maria");
+        directorio.mostrarInorden();
+    }
+}
