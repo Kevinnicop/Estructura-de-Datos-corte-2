@@ -1,0 +1,224 @@
+import java.util.Scanner;
+import java.util.ArrayList;
+
+public class Main {
+    
+    static class Producto {
+        int id;
+        String nombre;
+        String categoria;
+        double precio;
+        double rating;
+        
+        public Producto(int id, String nombre, String categoria, double precio, double rating) {
+            this.id = id;
+            this.nombre = nombre;
+            this.categoria = categoria;
+            this.precio = precio;
+            this.rating = rating;
+        }
+    }
+
+    static class NodoProducto {
+        Producto producto;
+        NodoProducto izquierdo;
+        NodoProducto derecho;
+        
+        public NodoProducto(Producto producto) {
+            this.producto = producto;
+            this.izquierdo = null;
+            this.derecho = null;
+        }
+    }
+
+    static class SistemaRecomendaciones {
+        private NodoProducto raiz;
+        private Scanner scanner = new Scanner(System.in);
+        
+        public void agregarProducto(Producto producto) {
+            raiz = insertarRecursivo(raiz, producto);
+        }
+        
+        private NodoProducto insertarRecursivo(NodoProducto nodo, Producto producto) {
+            if (nodo == null) {
+                return new NodoProducto(producto);
+            }
+            
+            if (producto.id < nodo.producto.id) {
+                nodo.izquierdo = insertarRecursivo(nodo.izquierdo, producto);
+            } else if (producto.id > nodo.producto.id) {
+                nodo.derecho = insertarRecursivo(nodo.derecho, producto);
+            } else {
+                System.out.println("¡El producto con ID " + producto.id + " ya existe!");
+            }
+            return nodo;
+        }
+        
+        public Producto buscarProducto(int id) {
+            return buscarRecursivo(raiz, id);
+        }
+        
+        private Producto buscarRecursivo(NodoProducto nodo, int id) {
+            if (nodo == null) return null;
+            
+            if (id == nodo.producto.id) {
+                return nodo.producto;
+            }
+            return id < nodo.producto.id 
+                ? buscarRecursivo(nodo.izquierdo, id)
+                : buscarRecursivo(nodo.derecho, id);
+        }
+        
+        public ArrayList<Producto> recomendarProductos(int id) {
+            ArrayList<Producto> recomendaciones = new ArrayList<>();
+            NodoProducto nodo = encontrarNodo(raiz, id);
+            
+            if (nodo != null) {
+                // Agregar productos cercanos en el árbol
+                if (nodo.izquierdo != null) {
+                    agregarSubarbol(nodo.izquierdo, recomendaciones);
+                }
+                if (nodo.derecho != null) {
+                    agregarSubarbol(nodo.derecho, recomendaciones);
+                }
+                
+                // Limitar a 3 recomendaciones y ordenar por rating
+                recomendaciones.sort((p1, p2) -> Double.compare(p2.rating, p1.rating));
+                while (recomendaciones.size() > 3) {
+                    recomendaciones.remove(recomendaciones.size() - 1);
+                }
+            }
+            
+            return recomendaciones;
+        }
+        
+        private NodoProducto encontrarNodo(NodoProducto nodo, int id) {
+            if (nodo == null) return null;
+            
+            if (id == nodo.producto.id) {
+                return nodo;
+            }
+            return id < nodo.producto.id 
+                ? encontrarNodo(nodo.izquierdo, id)
+                : encontrarNodo(nodo.derecho, id);
+        }
+        
+        private void agregarSubarbol(NodoProducto nodo, ArrayList<Producto> lista) {
+            if (nodo != null) {
+                lista.add(nodo.producto);
+                agregarSubarbol(nodo.izquierdo, lista);
+                agregarSubarbol(nodo.derecho, lista);
+            }
+        }
+        
+        public void mostrarProductos() {
+            System.out.println("\nCatálogo de Productos:");
+            System.out.println("ID\tNombre\t\tCategoría\tPrecio\tRating");
+            inorden(raiz);
+        }
+        
+        private void inorden(NodoProducto nodo) {
+            if (nodo != null) {
+                inorden(nodo.izquierdo);
+                System.out.printf("%d\t%-10s\t%-10s\t$%.2f\t%.1f%n",
+                    nodo.producto.id,
+                    nodo.producto.nombre,
+                    nodo.producto.categoria,
+                    nodo.producto.precio,
+                    nodo.producto.rating);
+                inorden(nodo.derecho);
+            }
+        }
+        
+        public void iniciarMenu() {
+            int opcion;
+            do {
+                System.out.println("\n=== SISTEMA DE RECOMENDACIONES ===");
+                System.out.println("1. Agregar nuevo producto");
+                System.out.println("2. Buscar producto");
+                System.out.println("3. Obtener recomendaciones");
+                System.out.println("4. Mostrar todos los productos");
+                System.out.println("5. Salir");
+                System.out.print("Seleccione una opción: ");
+                
+                opcion = scanner.nextInt();
+                scanner.nextLine(); // Limpiar buffer
+                
+                switch(opcion) {
+                    case 1:
+                        System.out.print("ID del producto: ");
+                        int id = scanner.nextInt();
+                        scanner.nextLine();
+                        System.out.print("Nombre: ");
+                        String nombre = scanner.nextLine();
+                        System.out.print("Categoría: ");
+                        String categoria = scanner.nextLine();
+                        System.out.print("Precio: ");
+                        double precio = scanner.nextDouble();
+                        System.out.print("Rating (1-5): ");
+                        double rating = scanner.nextDouble();
+                        
+                        agregarProducto(new Producto(id, nombre, categoria, precio, rating));
+                        System.out.println("Producto agregado con éxito!");
+                        break;
+                        
+                    case 2:
+                        System.out.print("Ingrese ID a buscar: ");
+                        int idBuscar = scanner.nextInt();
+                        Producto encontrado = buscarProducto(idBuscar);
+                        if (encontrado != null) {
+                            System.out.println("\nDetalles del producto:");
+                            System.out.println("ID: " + encontrado.id);
+                            System.out.println("Nombre: " + encontrado.nombre);
+                            System.out.println("Categoría: " + encontrado.categoria);
+                            System.out.println("Precio: $" + encontrado.precio);
+                            System.out.println("Rating: " + encontrado.rating + "/5");
+                        } else {
+                            System.out.println("Producto no encontrado");
+                        }
+                        break;
+                        
+                    case 3:
+                        System.out.print("Ingrese ID del producto base: ");
+                        int idBase = scanner.nextInt();
+                        ArrayList<Producto> recomendaciones = recomendarProductos(idBase);
+                        if (recomendaciones.isEmpty()) {
+                            System.out.println("No se encontraron recomendaciones");
+                        } else {
+                            System.out.println("\nRecomendaciones para usted:");
+                            for (Producto p : recomendaciones) {
+                                System.out.printf("- %s (ID: %d, Categoría: %s, Precio: $%.2f, Rating: %.1f)%n",
+                                    p.nombre, p.id, p.categoria, p.precio, p.rating);
+                            }
+                        }
+                        break;
+                        
+                    case 4:
+                        mostrarProductos();
+                        break;
+                        
+                    case 5:
+                        System.out.println("Saliendo del sistema...");
+                        break;
+                        
+                    default:
+                        System.out.println("Opción no válida");
+                }
+            } while(opcion != 5);
+        }
+    }
+
+    public static void main(String[] args) {
+        SistemaRecomendaciones sistema = new SistemaRecomendaciones();
+        
+        // Productos de ejemplo
+        sistema.agregarProducto(new Producto(1001, "Laptop", "Electrónica", 899.99, 4.5));
+        sistema.agregarProducto(new Producto(1003, "Teléfono", "Electrónica", 599.99, 4.2));
+        sistema.agregarProducto(new Producto(1002, "Tablet", "Electrónica", 349.99, 4.0));
+        sistema.agregarProducto(new Producto(1005, "Auriculares", "Accesorios", 99.99, 4.7));
+        sistema.agregarProducto(new Producto(1004, "Smartwatch", "Electrónica", 199.99, 4.3));
+        
+        // Iniciar menú interactivo
+        sistema.iniciarMenu();
+    }
+}
