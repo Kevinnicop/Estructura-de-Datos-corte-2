@@ -1,0 +1,147 @@
+import java.util.*;
+
+public class Main {
+    
+    static class Libro {
+        String isbn;
+        String titulo;
+        String autor;
+        boolean disponible;
+        
+        public Libro(String isbn, String titulo, String autor) {
+            this.isbn = isbn;
+            this.titulo = titulo;
+            this.autor = autor;
+            this.disponible = true;
+        }
+    }
+
+    static class NodoLibro {
+        Libro libro;
+        NodoLibro izquierdo;
+        NodoLibro derecho;
+        
+        public NodoLibro(Libro libro) {
+            this.libro = libro;
+            this.izquierdo = null;
+            this.derecho = null;
+        }
+    }
+
+    static class ArbolBiblioteca {
+        private NodoLibro raiz;
+        
+        public void insertarLibro(Libro libro) {
+            raiz = insertarRecursivo(raiz, libro);
+        }
+        
+        private NodoLibro insertarRecursivo(NodoLibro nodo, Libro libro) {
+            if (nodo == null) {
+                return new NodoLibro(libro);
+            }
+            
+            int comparacion = libro.isbn.compareTo(nodo.libro.isbn);
+            if (comparacion < 0) {
+                nodo.izquierdo = insertarRecursivo(nodo.izquierdo, libro);
+            } else if (comparacion > 0) {
+                nodo.derecho = insertarRecursivo(nodo.derecho, libro);
+            }
+            return nodo;
+        }
+        
+        public Libro buscarLibro(String isbn) {
+            return buscarRecursivo(raiz, isbn);
+        }
+        
+        private Libro buscarRecursivo(NodoLibro nodo, String isbn) {
+            if (nodo == null) return null;
+            
+            int comparacion = isbn.compareTo(nodo.libro.isbn);
+            if (comparacion == 0) {
+                return nodo.libro;
+            }
+            return comparacion < 0 
+                ? buscarRecursivo(nodo.izquierdo, isbn)
+                : buscarRecursivo(nodo.derecho, isbn);
+        }
+        
+        public void mostrarCatalogo() {
+            System.out.println("\nCatálogo de la Biblioteca:");
+            System.out.println("ISBN\t\tTítulo\t\t\tAutor\t\tDisponible");
+            inorden(raiz);
+        }
+        
+        private void inorden(NodoLibro nodo) {
+            if (nodo != null) {
+                inorden(nodo.izquierdo);
+                System.out.printf("%s\t%-20s\t%-15s\t%s%n",
+                    nodo.libro.isbn,
+                    nodo.libro.titulo,
+                    nodo.libro.autor,
+                    nodo.libro.disponible ? "Sí" : "No");
+                inorden(nodo.derecho);
+            }
+        }
+        
+        public boolean prestarLibro(String isbn) {
+            Libro libro = buscarLibro(isbn);
+            if (libro != null && libro.disponible) {
+                libro.disponible = false;
+                return true;
+            }
+            return false;
+        }
+        
+        public boolean devolverLibro(String isbn) {
+            Libro libro = buscarLibro(isbn);
+            if (libro != null && !libro.disponible) {
+                libro.disponible = true;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public static void main(String[] args) {
+        ArbolBiblioteca biblioteca = new ArbolBiblioteca();
+        
+        // Agregar libros al sistema
+        biblioteca.insertarLibro(new Libro("978-3-16-148410-0", "Cien años de soledad", "García Márquez"));
+        biblioteca.insertarLibro(new Libro("978-1-56619-909-4", "1984", "George Orwell"));
+        biblioteca.insertarLibro(new Libro("978-0-262-03384-8", "El Principito", "Antoine de Saint-Exupéry"));
+        
+        // Mostrar catálogo completo
+        biblioteca.mostrarCatalogo();
+        
+        // Ejemplo de préstamo
+        String libroAPrestar = "978-1-56619-909-4";
+        if (biblioteca.prestarLibro(libroAPrestar)) {
+            System.out.println("\nLibro prestado con éxito: " + libroAPrestar);
+        } else {
+            System.out.println("\nNo se pudo prestar el libro: " + libroAPrestar);
+        }
+        
+        // Mostrar catálogo actualizado
+        biblioteca.mostrarCatalogo();
+        
+        // Ejemplo de devolución
+        String libroADevolver = "978-1-56619-909-4";
+        if (biblioteca.devolverLibro(libroADevolver)) {
+            System.out.println("\nLibro devuelto con éxito: " + libroADevolver);
+        } else {
+            System.out.println("\nNo se pudo devolver el libro: " + libroADevolver);
+        }
+        
+        // Mostrar catálogo final
+        biblioteca.mostrarCatalogo();
+        
+        // Buscar libro específico
+        Libro encontrado = biblioteca.buscarLibro("978-3-16-148410-0");
+        if (encontrado != null) {
+            System.out.println("\nDetalles del libro encontrado:");
+            System.out.println("Título: " + encontrado.titulo);
+            System.out.println("Autor: " + encontrado.autor);
+            System.out.println("Disponible: " + (encontrado.disponible ? "Sí" : "No"));
+        }
+    }
+}
