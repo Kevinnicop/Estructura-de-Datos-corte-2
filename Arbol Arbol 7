@@ -1,0 +1,157 @@
+import java.util.Scanner;
+
+public class Main {
+    
+    static class Estudiante {
+        int id;
+        String nombre;
+        String carrera;
+        int semestre;
+        
+        public Estudiante(int id, String nombre, String carrera, int semestre) {
+            this.id = id;
+            this.nombre = nombre;
+            this.carrera = carrera;
+            this.semestre = semestre;
+        }
+    }
+
+    static class NodoEstudiante {
+        Estudiante estudiante;
+        NodoEstudiante izquierdo;
+        NodoEstudiante derecho;
+        
+        public NodoEstudiante(Estudiante estudiante) {
+            this.estudiante = estudiante;
+            this.izquierdo = null;
+            this.derecho = null;
+        }
+    }
+
+    static class SistemaEstudiantes {
+        private NodoEstudiante raiz;
+        private Scanner scanner = new Scanner(System.in);
+        
+        public void agregarEstudiante(Estudiante estudiante) {
+            raiz = insertarRecursivo(raiz, estudiante);
+        }
+        
+        private NodoEstudiante insertarRecursivo(NodoEstudiante nodo, Estudiante estudiante) {
+            if (nodo == null) {
+                return new NodoEstudiante(estudiante);
+            }
+            
+            if (estudiante.id < nodo.estudiante.id) {
+                nodo.izquierdo = insertarRecursivo(nodo.izquierdo, estudiante);
+            } else if (estudiante.id > nodo.estudiante.id) {
+                nodo.derecho = insertarRecursivo(nodo.derecho, estudiante);
+            } else {
+                System.out.println("¡El ID " + estudiante.id + " ya existe!");
+            }
+            return nodo;
+        }
+        
+        public Estudiante buscarEstudiante(int id) {
+            return buscarRecursivo(raiz, id);
+        }
+        
+        private Estudiante buscarRecursivo(NodoEstudiante nodo, int id) {
+            if (nodo == null) return null;
+            
+            if (id == nodo.estudiante.id) {
+                return nodo.estudiante;
+            }
+            return id < nodo.estudiante.id 
+                ? buscarRecursivo(nodo.izquierdo, id)
+                : buscarRecursivo(nodo.derecho, id);
+        }
+        
+        public void mostrarEstudiantes() {
+            System.out.println("\nListado de Estudiantes (Ordenado por ID):");
+            System.out.println("ID\tNombre\t\tCarrera\t\tSemestre");
+            inorden(raiz);
+        }
+        
+        private void inorden(NodoEstudiante nodo) {
+            if (nodo != null) {
+                inorden(nodo.izquierdo);
+                System.out.printf("%d\t%-10s\t%-10s\t%d%n",
+                    nodo.estudiante.id,
+                    nodo.estudiante.nombre,
+                    nodo.estudiante.carrera,
+                    nodo.estudiante.semestre);
+                inorden(nodo.derecho);
+            }
+        }
+        
+        public void iniciarMenu() {
+            int opcion;
+            do {
+                System.out.println("\n=== SISTEMA DE GESTIÓN DE ESTUDIANTES ===");
+                System.out.println("1. Registrar nuevo estudiante");
+                System.out.println("2. Buscar estudiante por ID");
+                System.out.println("3. Mostrar todos los estudiantes");
+                System.out.println("4. Salir");
+                System.out.print("Seleccione una opción: ");
+                
+                opcion = scanner.nextInt();
+                scanner.nextLine(); // Limpiar buffer
+                
+                switch(opcion) {
+                    case 1:
+                        System.out.print("Ingrese ID del estudiante: ");
+                        int id = scanner.nextInt();
+                        scanner.nextLine();
+                        System.out.print("Ingrese nombre: ");
+                        String nombre = scanner.nextLine();
+                        System.out.print("Ingrese carrera: ");
+                        String carrera = scanner.nextLine();
+                        System.out.print("Ingrese semestre: ");
+                        int semestre = scanner.nextInt();
+                        
+                        agregarEstudiante(new Estudiante(id, nombre, carrera, semestre));
+                        System.out.println("Estudiante registrado con éxito!");
+                        break;
+                        
+                    case 2:
+                        System.out.print("Ingrese ID a buscar: ");
+                        int idBuscar = scanner.nextInt();
+                        Estudiante encontrado = buscarEstudiante(idBuscar);
+                        if (encontrado != null) {
+                            System.out.println("\nDatos del estudiante:");
+                            System.out.println("ID: " + encontrado.id);
+                            System.out.println("Nombre: " + encontrado.nombre);
+                            System.out.println("Carrera: " + encontrado.carrera);
+                            System.out.println("Semestre: " + encontrado.semestre);
+                        } else {
+                            System.out.println("Estudiante no encontrado");
+                        }
+                        break;
+                        
+                    case 3:
+                        mostrarEstudiantes();
+                        break;
+                        
+                    case 4:
+                        System.out.println("Saliendo del sistema...");
+                        break;
+                        
+                    default:
+                        System.out.println("Opción no válida");
+                }
+            } while(opcion != 4);
+        }
+    }
+
+    public static void main(String[] args) {
+        SistemaEstudiantes sistema = new SistemaEstudiantes();
+        
+        // Datos de ejemplo
+        sistema.agregarEstudiante(new Estudiante(1001, "Ana López", "Ing. Sistemas", 5));
+        sistema.agregarEstudiante(new Estudiante(1003, "Carlos Ruiz", "Medicina", 3));
+        sistema.agregarEstudiante(new Estudiante(1002, "Beatriz García", "Derecho", 2));
+        
+        // Iniciar menú interactivo
+        sistema.iniciarMenu();
+    }
+}
