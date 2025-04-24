@@ -1,0 +1,159 @@
+import java.util.Scanner;
+
+public class Main {
+    
+    static class Archivo {
+        String nombre;
+        String tipo;
+        double tamaño; // en KB
+        String fechaModificacion;
+        
+        public Archivo(String nombre, String tipo, double tamaño, String fechaModificacion) {
+            this.nombre = nombre;
+            this.tipo = tipo;
+            this.tamaño = tamaño;
+            this.fechaModificacion = fechaModificacion;
+        }
+    }
+
+    static class NodoArchivo {
+        Archivo archivo;
+        NodoArchivo izquierdo;
+        NodoArchivo derecho;
+        
+        public NodoArchivo(Archivo archivo) {
+            this.archivo = archivo;
+            this.izquierdo = null;
+            this.derecho = null;
+        }
+    }
+
+    static class SistemaArchivos {
+        private NodoArchivo raiz;
+        private Scanner scanner = new Scanner(System.in);
+        
+        public void agregarArchivo(Archivo archivo) {
+            raiz = insertarRecursivo(raiz, archivo);
+        }
+        
+        private NodoArchivo insertarRecursivo(NodoArchivo nodo, Archivo archivo) {
+            if (nodo == null) {
+                return new NodoArchivo(archivo);
+            }
+            
+            int comparacion = archivo.nombre.compareTo(nodo.archivo.nombre);
+            if (comparacion < 0) {
+                nodo.izquierdo = insertarRecursivo(nodo.izquierdo, archivo);
+            } else if (comparacion > 0) {
+                nodo.derecho = insertarRecursivo(nodo.derecho, archivo);
+            } else {
+                System.out.println("¡El archivo '" + archivo.nombre + "' ya existe!");
+            }
+            return nodo;
+        }
+        
+        public Archivo buscarArchivo(String nombre) {
+            return buscarRecursivo(raiz, nombre);
+        }
+        
+        private Archivo buscarRecursivo(NodoArchivo nodo, String nombre) {
+            if (nodo == null) return null;
+            
+            int comparacion = nombre.compareTo(nodo.archivo.nombre);
+            if (comparacion == 0) {
+                return nodo.archivo;
+            }
+            return comparacion < 0 
+                ? buscarRecursivo(nodo.izquierdo, nombre)
+                : buscarRecursivo(nodo.derecho, nombre);
+        }
+        
+        public void mostrarArchivos() {
+            System.out.println("\nListado de Archivos (Orden alfabético):");
+            System.out.println("Nombre\t\tTipo\tTamaño(KB)\tÚltima modificación");
+            inorden(raiz);
+        }
+        
+        private void inorden(NodoArchivo nodo) {
+            if (nodo != null) {
+                inorden(nodo.izquierdo);
+                System.out.printf("%-15s\t%-5s\t%.2f\t\t%s%n",
+                    nodo.archivo.nombre,
+                    nodo.archivo.tipo,
+                    nodo.archivo.tamaño,
+                    nodo.archivo.fechaModificacion);
+                inorden(nodo.derecho);
+            }
+        }
+        
+        public void iniciarMenu() {
+            int opcion;
+            do {
+                System.out.println("\n=== SISTEMA DE ARCHIVOS ===");
+                System.out.println("1. Agregar nuevo archivo");
+                System.out.println("2. Buscar archivo");
+                System.out.println("3. Mostrar todos los archivos");
+                System.out.println("4. Salir");
+                System.out.print("Seleccione una opción: ");
+                
+                opcion = scanner.nextInt();
+                scanner.nextLine(); // Limpiar buffer
+                
+                switch(opcion) {
+                    case 1:
+                        System.out.print("Nombre del archivo (con extensión): ");
+                        String nombre = scanner.nextLine();
+                        System.out.print("Tipo (txt, png, etc): ");
+                        String tipo = scanner.nextLine();
+                        System.out.print("Tamaño en KB: ");
+                        double tamaño = scanner.nextDouble();
+                        scanner.nextLine();
+                        System.out.print("Fecha de modificación (dd/mm/aaaa): ");
+                        String fecha = scanner.nextLine();
+                        
+                        agregarArchivo(new Archivo(nombre, tipo, tamaño, fecha));
+                        System.out.println("Archivo agregado con éxito!");
+                        break;
+                        
+                    case 2:
+                        System.out.print("Ingrese nombre del archivo a buscar: ");
+                        String nombreBuscar = scanner.nextLine();
+                        Archivo encontrado = buscarArchivo(nombreBuscar);
+                        if (encontrado != null) {
+                            System.out.println("\nDetalles del archivo:");
+                            System.out.println("Nombre: " + encontrado.nombre);
+                            System.out.println("Tipo: " + encontrado.tipo);
+                            System.out.println("Tamaño: " + encontrado.tamaño + " KB");
+                            System.out.println("Última modificación: " + encontrado.fechaModificacion);
+                        } else {
+                            System.out.println("Archivo no encontrado");
+                        }
+                        break;
+                        
+                    case 3:
+                        mostrarArchivos();
+                        break;
+                        
+                    case 4:
+                        System.out.println("Saliendo del sistema...");
+                        break;
+                        
+                    default:
+                        System.out.println("Opción no válida");
+                }
+            } while(opcion != 4);
+        }
+    }
+
+    public static void main(String[] args) {
+        SistemaArchivos sistema = new SistemaArchivos();
+        
+        // Archivos de ejemplo
+        sistema.agregarArchivo(new Archivo("documento.txt", "txt", 150.5, "15/03/2023"));
+        sistema.agregarArchivo(new Archivo("imagen.png", "png", 2450.0, "20/03/2023"));
+        sistema.agregarArchivo(new Archivo("presentacion.pdf", "pdf", 3200.75, "10/03/2023"));
+        
+        // Iniciar menú interactivo
+        sistema.iniciarMenu();
+    }
+}
