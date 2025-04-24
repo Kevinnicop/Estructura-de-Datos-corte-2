@@ -1,0 +1,142 @@
+import java.util.Scanner;
+
+public class Main {
+    
+    static class ResultadoBusqueda {
+        String palabra;
+        int frecuencia;
+        
+        public ResultadoBusqueda(String palabra) {
+            this.palabra = palabra;
+            this.frecuencia = 1;
+        }
+    }
+
+    static class NodoBusqueda {
+        ResultadoBusqueda resultado;
+        NodoBusqueda izquierdo;
+        NodoBusqueda derecho;
+        
+        public NodoBusqueda(String palabra) {
+            this.resultado = new ResultadoBusqueda(palabra);
+            this.izquierdo = null;
+            this.derecho = null;
+        }
+    }
+
+    static class MotorBusqueda {
+        private NodoBusqueda raiz;
+        private Scanner scanner = new Scanner(System.in);
+        
+        public void insertar(String palabra) {
+            raiz = insertarRecursivo(raiz, palabra.toLowerCase());
+        }
+        
+        private NodoBusqueda insertarRecursivo(NodoBusqueda nodo, String palabra) {
+            if (nodo == null) {
+                return new NodoBusqueda(palabra);
+            }
+            
+            int comparacion = palabra.compareTo(nodo.resultado.palabra);
+            if (comparacion < 0) {
+                nodo.izquierdo = insertarRecursivo(nodo.izquierdo, palabra);
+            } else if (comparacion > 0) {
+                nodo.derecho = insertarRecursivo(nodo.derecho, palabra);
+            } else {
+                nodo.resultado.frecuencia++;
+            }
+            return nodo;
+        }
+        
+        public ResultadoBusqueda buscar(String palabra) {
+            return buscarRecursivo(raiz, palabra.toLowerCase());
+        }
+        
+        private ResultadoBusqueda buscarRecursivo(NodoBusqueda nodo, String palabra) {
+            if (nodo == null) return null;
+            
+            int comparacion = palabra.compareTo(nodo.resultado.palabra);
+            if (comparacion == 0) {
+                return nodo.resultado;
+            }
+            return comparacion < 0 
+                ? buscarRecursivo(nodo.izquierdo, palabra)
+                : buscarRecursivo(nodo.derecho, palabra);
+        }
+        
+        public void mostrarPalabrasOrdenadas() {
+            System.out.println("\nPalabras clave registradas (orden alfabético):");
+            inorden(raiz);
+        }
+        
+        private void inorden(NodoBusqueda nodo) {
+            if (nodo != null) {
+                inorden(nodo.izquierdo);
+                System.out.printf("- %s (búsquedas: %d)%n", 
+                    nodo.resultado.palabra, 
+                    nodo.resultado.frecuencia);
+                inorden(nodo.derecho);
+            }
+        }
+        
+        public void iniciarInterfaz() {
+            int opcion;
+            do {
+                System.out.println("\n=== MOTOR DE BÚSQUEDA ===");
+                System.out.println("1. Agregar palabra clave");
+                System.out.println("2. Buscar palabra");
+                System.out.println("3. Mostrar todas las palabras");
+                System.out.println("4. Salir");
+                System.out.print("Seleccione una opción: ");
+                
+                opcion = scanner.nextInt();
+                scanner.nextLine(); // Limpiar buffer
+                
+                switch(opcion) {
+                    case 1:
+                        System.out.print("Ingrese palabra a agregar: ");
+                        String nuevaPalabra = scanner.nextLine();
+                        insertar(nuevaPalabra);
+                        System.out.println("Palabra agregada con éxito!");
+                        break;
+                        
+                    case 2:
+                        System.out.print("Ingrese palabra a buscar: ");
+                        String palabraBuscar = scanner.nextLine();
+                        ResultadoBusqueda resultado = buscar(palabraBuscar);
+                        if (resultado != null) {
+                            System.out.printf("Resultado: %s (búsquedas: %d)%n", 
+                                resultado.palabra, resultado.frecuencia);
+                        } else {
+                            System.out.println("La palabra no existe en el sistema");
+                        }
+                        break;
+                        
+                    case 3:
+                        mostrarPalabrasOrdenadas();
+                        break;
+                        
+                    case 4:
+                        System.out.println("Saliendo del sistema...");
+                        break;
+                        
+                    default:
+                        System.out.println("Opción no válida");
+                }
+            } while(opcion != 4);
+        }
+    }
+
+    public static void main(String[] args) {
+        MotorBusqueda motor = new MotorBusqueda();
+        
+        // Datos de ejemplo
+        motor.insertar("java");
+        motor.insertar("python");
+        motor.insertar("programacion");
+        motor.insertar("algoritmo");
+        
+        // Iniciar interfaz interactiva
+        motor.iniciarInterfaz();
+    }
+}
