@@ -1,0 +1,118 @@
+class Nodo {
+    int valor;
+    Nodo izquierda;
+    Nodo derecha;
+    int altura;
+
+    Nodo(int valor) {
+        this.valor = valor;
+        this.altura = 1;
+    }
+}
+
+public class Main {
+    Nodo raiz;
+
+    // Obtener altura
+    int altura(Nodo nodo) {
+        return nodo == null ? 0 : nodo.altura;
+    }
+
+    // Rotación derecha
+    Nodo rotarDerecha(Nodo y) {
+        Nodo x = y.izquierda;
+        Nodo T2 = x.derecha;
+
+        x.derecha = y;
+        y.izquierda = T2;
+
+        y.altura = Math.max(altura(y.izquierda), altura(y.derecha)) + 1;
+        x.altura = Math.max(altura(x.izquierda), altura(x.derecha)) + 1;
+
+        return x;
+    }
+
+    // Rotación izquierda
+    Nodo rotarIzquierda(Nodo x) {
+        Nodo y = x.derecha;
+        Nodo T2 = y.izquierda;
+
+        y.izquierda = x;
+        x.derecha = T2;
+
+        x.altura = Math.max(altura(x.izquierda), altura(x.derecha)) + 1;
+        y.altura = Math.max(altura(y.izquierda), altura(y.derecha)) + 1;
+
+        return y;
+    }
+
+    // Insertar valor
+    void insertar(int valor) {
+        raiz = insertarRecursivo(raiz, valor);
+    }
+
+    Nodo insertarRecursivo(Nodo nodo, int valor) {
+        if (nodo == null) return new Nodo(valor);
+
+        if (valor < nodo.valor) {
+            nodo.izquierda = insertarRecursivo(nodo.izquierda, valor);
+        } else if (valor > nodo.valor) {
+            nodo.derecha = insertarRecursivo(nodo.derecha, valor);
+        } else {
+            return nodo;
+        }
+
+        nodo.altura = 1 + Math.max(altura(nodo.izquierda), altura(nodo.derecha));
+
+        int balance = altura(nodo.izquierda) - altura(nodo.derecha);
+
+        // Casos de rotación
+        if (balance > 1 && valor < nodo.izquierda.valor) {
+            return rotarDerecha(nodo);
+        }
+        if (balance < -1 && valor > nodo.derecha.valor) {
+            return rotarIzquierda(nodo);
+        }
+        if (balance > 1 && valor > nodo.izquierda.valor) {
+            nodo.izquierda = rotarIzquierda(nodo.izquierda);
+            return rotarDerecha(nodo);
+        }
+        if (balance < -1 && valor < nodo.derecha.valor) {
+            nodo.derecha = rotarDerecha(nodo.derecha);
+            return rotarIzquierda(nodo);
+        }
+
+        return nodo;
+    }
+
+    // Recorrido inorden
+    void inorden() {
+        inordenRecursivo(raiz);
+    }
+
+    void inordenRecursivo(Nodo nodo) {
+        if (nodo != null) {
+            inordenRecursivo(nodo.izquierda);
+            System.out.print(nodo.valor + " ");
+            inordenRecursivo(nodo.derecha);
+        }
+    }
+
+    public static void main(String[] args) {
+        Main arbol = new Main();
+        
+        // Datos de prueba
+        int[] valores = {10, 20, 30, 40, 50, 25};
+        
+        System.out.println("Insertando valores:");
+        for (int valor : valores) {
+            System.out.print(valor + " ");
+            arbol.insertar(valor);
+        }
+        
+        System.out.println("\n\nRecorrido inorden:");
+        arbol.inorden();
+        
+        System.out.println("\n\nÁrbol AVL creado correctamente");
+    }
+}
