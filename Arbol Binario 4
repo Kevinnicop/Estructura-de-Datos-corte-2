@@ -1,0 +1,113 @@
+import java.util.*;
+
+// Clase principal para poder correrlo
+public class Main {
+    
+    static class Producto {
+        int codigo;
+        String nombre;
+        int cantidad;
+        double precio;
+
+        public Producto(int codigo, String nombre, int cantidad, double precio) {
+            this.codigo = codigo;
+            this.nombre = nombre;
+            this.cantidad = cantidad;
+            this.precio = precio;
+        }
+    }
+
+    static class NodoInventario {
+        Producto producto;
+        NodoInventario izquierdo;
+        NodoInventario derecho;
+
+        public NodoInventario(Producto producto) {
+            this.producto = producto;
+            this.izquierdo = null;
+            this.derecho = null;
+        }
+    }
+
+    static class SistemaInventario {
+        private NodoInventario raiz;
+
+        public void agregarProducto(Producto producto) {
+            raiz = insertarProducto(raiz, producto);
+        }
+
+        private NodoInventario insertarProducto(NodoInventario nodo, Producto producto) {
+            if (nodo == null) {
+                return new NodoInventario(producto);
+            }
+
+            if (producto.codigo < nodo.producto.codigo) {
+                nodo.izquierdo = insertarProducto(nodo.izquierdo, producto);
+            } else if (producto.codigo > nodo.producto.codigo) {
+                nodo.derecho = insertarProducto(nodo.derecho, producto);
+            } else {
+                nodo.producto.cantidad += producto.cantidad;
+            }
+            return nodo;
+        }
+
+        public Producto buscarProducto(int codigo) {
+            return buscarProductoRec(raiz, codigo);
+        }
+
+        private Producto buscarProductoRec(NodoInventario nodo, int codigo) {
+            if (nodo == null) return null;
+            
+            if (codigo == nodo.producto.codigo) {
+                return nodo.producto;
+            }
+            return codigo < nodo.producto.codigo 
+                ? buscarProductoRec(nodo.izquierdo, codigo)
+                : buscarProductoRec(nodo.derecho, codigo);
+        }
+
+        public void mostrarInventario() {
+            System.out.println("\nInventario Actualizado:");
+            System.out.println("Código\tNombre\t\tCantidad\tPrecio");
+            inorden(raiz);
+        }
+
+        private void inorden(NodoInventario nodo) {
+            if (nodo != null) {
+                inorden(nodo.izquierdo);
+                System.out.printf("%d\t%-10s\t%d\t\t$%.2f%n",
+                    nodo.producto.codigo,
+                    nodo.producto.nombre,
+                    nodo.producto.cantidad,
+                    nodo.producto.precio);
+                inorden(nodo.derecho);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SistemaInventario inventario = new SistemaInventario();
+        
+        // Agregar productos de prueba
+        inventario.agregarProducto(new Producto(101, "Harina", 50, 1.99));
+        inventario.agregarProducto(new Producto(105, "Aceite", 30, 3.49));
+        inventario.agregarProducto(new Producto(103, "Sal", 80, 0.99));
+        inventario.agregarProducto(new Producto(102, "Azúcar", 45, 2.49));
+        inventario.agregarProducto(new Producto(104, "Leche", 60, 1.79));
+
+        // Mostrar inventario completo
+        inventario.mostrarInventario();
+
+        // Buscar un producto específico
+        int codigoBusqueda = 103;
+        Producto encontrado = inventario.buscarProducto(codigoBusqueda);
+        
+        System.out.println("\nResultado de búsqueda:");
+        if (encontrado != null) {
+            System.out.println("Producto encontrado: " + encontrado.nombre + 
+                            " - Stock: " + encontrado.cantidad);
+        } else {
+            System.out.println("Producto con código " + codigoBusqueda + " no encontrado");
+        }
+    }
+}
