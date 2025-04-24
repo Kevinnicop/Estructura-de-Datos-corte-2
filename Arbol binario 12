@@ -1,0 +1,128 @@
+class Estudiante {
+    String nombre;
+    Estudiante izquierda;
+    Estudiante derecha;
+
+    public Estudiante(String nombre) {
+        this.nombre = nombre;
+        this.izquierda = null;
+        this.derecha = null;
+    }
+}
+
+public class Main {
+    private Estudiante raiz;
+
+    // Insertar estudiante
+    public void insertar(String nombre) {
+        raiz = insertarRec(raiz, nombre);
+    }
+
+    private Estudiante insertarRec(Estudiante nodo, String nombre) {
+        if (nodo == null) {
+            return new Estudiante(nombre);
+        }
+
+        if (nombre.compareTo(nodo.nombre) < 0) {
+            nodo.izquierda = insertarRec(nodo.izquierda, nombre);
+        } else if (nombre.compareTo(nodo.nombre) > 0) {
+            nodo.derecha = insertarRec(nodo.derecha, nombre);
+        }
+        
+        return nodo;
+    }
+
+    // Eliminar estudiante
+    public void eliminar(String nombre) {
+        raiz = eliminarRec(raiz, nombre);
+    }
+
+    private Estudiante eliminarRec(Estudiante nodo, String nombre) {
+        if (nodo == null) return null;
+
+        if (nombre.compareTo(nodo.nombre) < 0) {
+            nodo.izquierda = eliminarRec(nodo.izquierda, nombre);
+        } else if (nombre.compareTo(nodo.nombre) > 0) {
+            nodo.derecha = eliminarRec(nodo.derecha, nombre);
+        } else {
+            if (nodo.izquierda == null) return nodo.derecha;
+            if (nodo.derecha == null) return nodo.izquierda;
+
+            nodo.nombre = encontrarMinimo(nodo.derecha).nombre;
+            nodo.derecha = eliminarRec(nodo.derecha, nodo.nombre);
+        }
+        
+        return nodo;
+    }
+
+    private Estudiante encontrarMinimo(Estudiante nodo) {
+        return nodo.izquierda == null ? nodo : encontrarMinimo(nodo.izquierda);
+    }
+
+    // Recorridos
+    public void inOrden() {
+        System.out.println("Estudiantes (Inorden):");
+        inOrdenRec(raiz);
+        System.out.println();
+    }
+
+    private void inOrdenRec(Estudiante nodo) {
+        if (nodo != null) {
+            inOrdenRec(nodo.izquierda);
+            System.out.print(nodo.nombre + " ");
+            inOrdenRec(nodo.derecha);
+        }
+    }
+
+    public void preOrden() {
+        System.out.println("Estudiantes (Preorden):");
+        preOrdenRec(raiz);
+        System.out.println();
+    }
+
+    private void preOrdenRec(Estudiante nodo) {
+        if (nodo != null) {
+            System.out.print(nodo.nombre + " ");
+            preOrdenRec(nodo.izquierda);
+            preOrdenRec(nodo.derecha);
+        }
+    }
+
+    public void postOrden() {
+        System.out.println("Estudiantes (Postorden):");
+        postOrdenRec(raiz);
+        System.out.println();
+    }
+
+    private void postOrdenRec(Estudiante nodo) {
+        if (nodo != null) {
+            postOrdenRec(nodo.izquierda);
+            postOrdenRec(nodo.derecha);
+            System.out.print(nodo.nombre + " ");
+        }
+    }
+
+    public static void main(String[] args) {
+        Main directorio = new Main();
+        
+        // Prueba automática
+        String[] estudiantes = {"Maria", "Carlos", "Ana", "Pedro", "Luisa"};
+        
+        System.out.println("Insertando estudiantes:");
+        for (String nombre : estudiantes) {
+            System.out.print(nombre + " ");
+            directorio.insertar(nombre);
+        }
+        
+        System.out.println("\n\nÁrbol creado:");
+        directorio.inOrden();
+        
+        System.out.println("\nEliminando a 'Carlos':");
+        directorio.eliminar("Carlos");
+        directorio.inOrden();
+        
+        System.out.println("\nRecorridos completos:");
+        directorio.preOrden();
+        directorio.postOrden();
+    }
+}
