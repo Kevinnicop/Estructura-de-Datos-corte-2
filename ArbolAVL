@@ -1,118 +1,289 @@
 class Nodo {
     int valor;
-    Nodo izquierda;
-    Nodo derecha;
+    Nodo izquierda, derecha;
     int altura;
 
-    Nodo(int valor) {
-        this.valor = valor;
-        this.altura = 1;
+    Nodo(int d) {
+        valor = d;
+        altura = 1; // La altura inicial de un nuevo nodo es 1
     }
 }
 
-public class Main {
-    Nodo raiz;
+class ArbolAVL {
+    private Nodo raiz;
 
-    // Obtener altura
-    int altura(Nodo nodo) {
-        return nodo == null ? 0 : nodo.altura;
+    // ---------------------- MÉTODOS BaSICOS ----------------------
+
+    /**
+     * Obtiene la altura de un nodo.
+     * Si el nodo es null, retorna 0.
+     */
+    private int altura(Nodo nodo) {
+        return (nodo == null) ? 0 : nodo.altura;
     }
 
-    // Rotación derecha
-    Nodo rotarDerecha(Nodo y) {
+    /**
+     * Calcula el factor de balance de un nodo.
+     * El factor de balance es: altura(subárbol izquierdo) - altura(subárbol derecho)
+     * Valores aceptables: -1, 0, 1
+     */
+    private int factorBalance(Nodo nodo) {
+        return (nodo == null) ? 0 : altura(nodo.izquierda) - altura(nodo.derecha);
+    }
+
+    /**
+     * Actualiza la altura de un nodo basado en las alturas de sus hijos.
+     */
+    private void actualizarAltura(Nodo nodo) {
+        nodo.altura = 1 + Math.max(altura(nodo.izquierda), altura(nodo.derecha));
+    }
+
+    // ---------------------- ROTACIONES ----------------------
+
+    /**
+     * Rotación simple a la derecha (LL Case)
+     *       y                              x
+     *      / \                           /   \
+     *     x   T3  ––––––––––––>        T1     y
+     *    / \                                 / \
+     *   T1  T2                              T2  T3
+     */
+    private Nodo rotacionDerecha(Nodo y) {
         Nodo x = y.izquierda;
         Nodo T2 = x.derecha;
 
+        // Realizar rotación
         x.derecha = y;
         y.izquierda = T2;
 
-        y.altura = Math.max(altura(y.izquierda), altura(y.derecha)) + 1;
-        x.altura = Math.max(altura(x.izquierda), altura(x.derecha)) + 1;
+        // Actualizar alturas (primero y luego x porque y ahora es hijo de x)
+        actualizarAltura(y);
+        actualizarAltura(x);
 
-        return x;
+        return x; // Nueva raíz del subárbol
     }
 
-    // Rotación izquierda
-    Nodo rotarIzquierda(Nodo x) {
+    /**
+     * Rotación simple a la izquierda (RR Case)
+     *     x                              y
+     *    / \                           /   \
+     *   T1  y   ––––––––––––>        x     T3
+     *      / \                       / \
+     *     T2  T3                    T1 T2
+     */
+    private Nodo rotacionIzquierda(Nodo x) {
         Nodo y = x.derecha;
         Nodo T2 = y.izquierda;
 
+        // Realizar rotación
         y.izquierda = x;
         x.derecha = T2;
 
-        x.altura = Math.max(altura(x.izquierda), altura(x.derecha)) + 1;
-        y.altura = Math.max(altura(y.izquierda), altura(y.derecha)) + 1;
+        // Actualizar alturas
+        actualizarAltura(x);
+        actualizarAltura(y);
 
-        return y;
+        return y; // Nueva raíz del subárbol
     }
 
-    // Insertar valor
-    void insertar(int valor) {
+    // ---------------------- INSERCIÓN ----------------------
+
+    public void insertar(int valor) {
         raiz = insertarRecursivo(raiz, valor);
     }
 
-    Nodo insertarRecursivo(Nodo nodo, int valor) {
-        if (nodo == null) return new Nodo(valor);
+    private Nodo insertarRecursivo(Nodo nodo, int valor) {
+        // 1. Inserción estándar de BST
+        if (nodo == null) {
+            return new Nodo(valor);
+        }
 
         if (valor < nodo.valor) {
             nodo.izquierda = insertarRecursivo(nodo.izquierda, valor);
         } else if (valor > nodo.valor) {
             nodo.derecha = insertarRecursivo(nodo.derecha, valor);
         } else {
-            return nodo;
+            return nodo; // No se permiten valores duplicados
         }
 
-        nodo.altura = 1 + Math.max(altura(nodo.izquierda), altura(nodo.derecha));
+        // 2. Actualizar altura del nodo actual
+        actualizarAltura(nodo);
 
-        int balance = altura(nodo.izquierda) - altura(nodo.derecha);
+        // 3. Balancear el árbol si es necesario
+        return balancear(nodo, valor);
+    }
 
-        // Casos de rotación
-        if (balance > 1 && valor < nodo.izquierda.valor) {
-            return rotarDerecha(nodo);
+    // ---------------------- ELIMINACIÓN ----------------------
+
+    public void eliminar(int valor) {
+        raiz = eliminarRecursivo(raiz, valor);
+    }
+
+    private Nodo eliminarRecursivo(Nodo raiz, int valor) {
+        // 1. Eliminación estándar de BST
+        if (raiz == null) {
+            return raiz;
         }
-        if (balance < -1 && valor > nodo.derecha.valor) {
-            return rotarIzquierda(nodo);
+
+        if (valor < raiz.valor) {
+            raiz.izquierda = eliminarRecursivo(raiz.izquierda, valor);
+        } else if (valor > raiz.valor) {
+            raiz.derecha = eliminarRecursivo(raiz.derecha, valor);
+        } else {
+            // Nodo con un solo hijo o sin hijos
+            if (raiz.izquierda == null || raiz.derecha == null) {
+                Nodo temp = (raiz.izquierda != null) ? raiz.izquierda : raiz.derecha;
+
+                // Caso sin hijos
+                if (temp == null) {
+                    temp = raiz;
+                    raiz = null;
+                } else { // Caso con un hijo
+                    raiz = temp; // Copia el contenido del hijo no nulo
+                }
+            } else {
+                // Nodo con dos hijos: obtener el sucesor inorden (mínimo en el subárbol derecho)
+                Nodo temp = minimoValorNodo(raiz.derecha);
+                raiz.valor = temp.valor;
+                raiz.derecha = eliminarRecursivo(raiz.derecha, temp.valor);
+            }
         }
-        if (balance > 1 && valor > nodo.izquierda.valor) {
-            nodo.izquierda = rotarIzquierda(nodo.izquierda);
-            return rotarDerecha(nodo);
+
+        // Si el árbol tenía solo un nodo
+        if (raiz == null) {
+            return raiz;
         }
-        if (balance < -1 && valor < nodo.derecha.valor) {
-            nodo.derecha = rotarDerecha(nodo.derecha);
-            return rotarIzquierda(nodo);
+
+        // 2. Actualizar altura
+        actualizarAltura(raiz);
+
+        // 3. Balancear el árbol
+        return balancear(raiz);
+    }
+
+    private Nodo minimoValorNodo(Nodo nodo) {
+        Nodo actual = nodo;
+        while (actual.izquierda != null) {
+            actual = actual.izquierda;
+        }
+        return actual;
+    }
+
+    // ---------------------- BALANCEO ----------------------
+
+    private Nodo balancear(Nodo nodo) {
+        int balance = factorBalance(nodo);
+
+        // Caso Izquierda Izquierda (LL)
+        if (balance > 1 && factorBalance(nodo.izquierda) >= 0) {
+            return rotacionDerecha(nodo);
+        }
+
+        // Caso Izquierda Derecha (LR)
+        if (balance > 1 && factorBalance(nodo.izquierda) < 0) {
+            nodo.izquierda = rotacionIzquierda(nodo.izquierda);
+            return rotacionDerecha(nodo);
+        }
+
+        // Caso Derecha Derecha (RR)
+        if (balance < -1 && factorBalance(nodo.derecha) <= 0) {
+            return rotacionIzquierda(nodo);
+        }
+
+        // Caso Derecha Izquierda (RL)
+        if (balance < -1 && factorBalance(nodo.derecha) > 0) {
+            nodo.derecha = rotacionDerecha(nodo.derecha);
+            return rotacionIzquierda(nodo);
         }
 
         return nodo;
     }
 
-    // Recorrido inorden
-    void inorden() {
-        inordenRecursivo(raiz);
+    private Nodo balancear(Nodo nodo, int valor) {
+        int balance = factorBalance(nodo);
+
+        // Los mismos casos que arriba, pero con chequeo de valor para inserción
+        if (balance > 1 && valor < nodo.izquierda.valor) {
+            return rotacionDerecha(nodo);
+        }
+
+        if (balance < -1 && valor > nodo.derecha.valor) {
+            return rotacionIzquierda(nodo);
+        }
+
+        if (balance > 1 && valor > nodo.izquierda.valor) {
+            nodo.izquierda = rotacionIzquierda(nodo.izquierda);
+            return rotacionDerecha(nodo);
+        }
+
+        if (balance < -1 && valor < nodo.derecha.valor) {
+            nodo.derecha = rotacionDerecha(nodo.derecha);
+            return rotacionIzquierda(nodo);
+        }
+
+        return nodo;
     }
 
-    void inordenRecursivo(Nodo nodo) {
+    // ---------------------- RECORRIDOS ----------------------
+
+    public void inOrden() {
+        inOrdenRecursivo(raiz);
+        System.out.println();
+    }
+
+    private void inOrdenRecursivo(Nodo nodo) {
         if (nodo != null) {
-            inordenRecursivo(nodo.izquierda);
+            inOrdenRecursivo(nodo.izquierda);
             System.out.print(nodo.valor + " ");
-            inordenRecursivo(nodo.derecha);
+            inOrdenRecursivo(nodo.derecha);
         }
     }
 
+    public void preOrden() {
+        preOrdenRecursivo(raiz);
+        System.out.println();
+    }
+
+    private void preOrdenRecursivo(Nodo nodo) {
+        if (nodo != null) {
+            System.out.print(nodo.valor + " ");
+            preOrdenRecursivo(nodo.izquierda);
+            preOrdenRecursivo(nodo.derecha);
+        }
+    }
+}
+
+// Clase Main para ejecución (debe estar en su propio archivo Main.java)
+public class Main {
     public static void main(String[] args) {
-        Main arbol = new Main();
+        ArbolAVL arbol = new ArbolAVL();
+
+        System.out.println("======== PRUEBA DE aRBOL AVL ========");
         
-        // Datos de prueba
-        int[] valores = {10, 20, 30, 40, 50, 25};
-        
-        System.out.println("Insertando valores:");
-        for (int valor : valores) {
-            System.out.print(valor + " ");
+        // Prueba de inserción
+        System.out.println("\nInsertando valores: 10, 20, 30, 40, 50, 25");
+        int[] valoresInsertar = {10, 20, 30, 40, 50, 25};
+        for (int valor : valoresInsertar) {
             arbol.insertar(valor);
         }
-        
-        System.out.println("\n\nRecorrido inorden:");
-        arbol.inorden();
-        
-        System.out.println("\n\nÁrbol AVL creado correctamente");
+
+        System.out.println("\nRecorrido inOrden (debe mostrar valores ordenados):");
+        arbol.inOrden(); // 10 20 25 30 40 50
+
+        System.out.println("\nRecorrido preOrden (muestra estructura del árbol):");
+        arbol.preOrden();
+
+        // Prueba de eliminación
+        System.out.println("\n\nEliminando valores: 10 y 40");
+        arbol.eliminar(10);
+        arbol.eliminar(40);
+
+        System.out.println("\nRecorrido inOrden después de eliminar:");
+        arbol.inOrden(); // 20 25 30 50
+
+        System.out.println("\nRecorrido preOrden después de eliminar:");
+        arbol.preOrden();
+
+        System.out.println("\n======== PRUEBA COMPLETADA ========");
     }
 }
